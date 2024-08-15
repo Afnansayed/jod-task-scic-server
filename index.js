@@ -26,6 +26,21 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    const productCollection = client.db('FshionX').collection('products');
+     
+    //gert products
+    app.get('/products', async (req,res) => {
+
+      const result = await productCollection.find().toArray();
+      res.send(result);
+    })
+    //add data in users cllection
+    app.post('/products', async (req,res) => {
+      const product = req.body;
+      const result = await productCollection.insertOne(product);
+      res.send(result);
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
