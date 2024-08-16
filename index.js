@@ -26,40 +26,15 @@ async function run() {
 
     const productCollection = client.db("FshionX").collection("products");
 
-    //gert products
-    // app.get('/products', async (req,res) => {
-    //   const page = parseInt(req.query.page) || 0;
-    //   const size = parseInt(req.query.size) || 10;
-    //   const brandFilter = req.query.brand;
-    //   const brandFilters = req.query.brand ? req.query.brand.split(',') : [];
-    //   console.log(brandFilter);
-    //   const pipeline = [];
-
-    //   if(brandFilter > 0){
-    //     pipeline.push({
-    //       $match:{seller: {$in: brandFilters}}
-    //     })
-    //   }
-
-    //   // Pagination stages
-    //    pipeline.push(
-    //    { $skip: page * size },
-    //    { $limit: size }
-    //    );
-
-    //   const result = await productCollection.aggregate(pipeline).toArray();
-    //   // .skip(page * size)
-    //   // .limit(size)
-
-    //   res.send(result);
-    // })
+    //get all products and agreegate pipline for soting and pagination
     app.get("/products", async (req, res) => {
       const page = parseInt(req.query.page) || 0;
       const size = parseInt(req.query.size) || 10;
       const brandFilter = req.query.brand;
       const brandFilters = brandFilter ? brandFilter.split(",") : [];
       const categoryFilter = req.query.category ? req.query.category.split(",") : [];
-      console.log(categoryFilter);
+      const maxPrice = parseFloat(req.query.priceRange) || Number.MAX_VALUE;
+     // console.log(maxPrice);
 
       const pipeline = [];
 
@@ -77,7 +52,12 @@ async function run() {
           $match:{category: {$in: categoryFilter}}
         })
       }
-
+      
+     pipeline.push({
+      $match: {
+        price: {$lte: maxPrice},
+      }
+     })
       // Pagination stages
       pipeline.push({ $skip: page * size }, { $limit: size });
 
@@ -88,12 +68,13 @@ async function run() {
         res.status(500).send({ error: "Failed to fetch products" });
       }
     });
-
+    // -------------------0000000000---------------
      // product count for pagination
      app.get("/productsCount", async (req, res) => {
       const brandFilter = req.query.brand;
       const brandFilters = brandFilter ? brandFilter.split(",") : [];
       const categoryFilter = req.query.category ? req.query.category.split(",") : [];
+      const maxPrice = parseFloat(req.query.priceRange) || Number.MAX_VALUE;
 
       const matchStage = {};
 
@@ -104,6 +85,9 @@ async function run() {
       if(categoryFilter.length > 0){
         matchStage.category = {$in: categoryFilter}
       }
+
+      matchStage.price = {$lte: maxPrice};
+
       const count = await productCollection.countDocuments(matchStage);
       res.send({ count });
     });
