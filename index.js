@@ -31,8 +31,12 @@ async function run() {
      
     //gert products
     app.get('/products', async (req,res) => {
-
-      const result = await productCollection.find().toArray();
+      const page = parseInt(req.query.page) || 0;
+      const size = parseInt(req.query.size) || 10;
+      const result = await productCollection.find()
+      .skip(page * size)
+      .limit(size)
+      .toArray();
       res.send(result);
     })
     //add data in users cllection
@@ -40,6 +44,12 @@ async function run() {
       const product = req.body;
       const result = await productCollection.insertOne(product);
       res.send(result);
+    })
+
+    // product count for pagination
+    app.get('/productsCount', async (req,res) => {
+         const count = await productCollection.estimatedDocumentCount();
+         res.send({count});
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
