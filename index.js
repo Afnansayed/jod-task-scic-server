@@ -1,15 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const { MongoClient, ServerApiVersion } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-
-
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.khblnbj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -19,7 +16,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -27,33 +24,88 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const productCollection = client.db('FshionX').collection('products');
-     
+    const productCollection = client.db("FshionX").collection("products");
+
     //gert products
-    app.get('/products', async (req,res) => {
+    // app.get('/products', async (req,res) => {
+    //   const page = parseInt(req.query.page) || 0;
+    //   const size = parseInt(req.query.size) || 10;
+    //   const brandFilter = req.query.brand;
+    //   const brandFilters = req.query.brand ? req.query.brand.split(',') : [];
+    //   console.log(brandFilter);
+    //   const pipeline = [];
+
+    //   if(brandFilter > 0){
+    //     pipeline.push({
+    //       $match:{seller: {$in: brandFilters}}
+    //     })
+    //   }
+
+    //   // Pagination stages
+    //    pipeline.push(
+    //    { $skip: page * size },
+    //    { $limit: size }
+    //    );
+
+    //   const result = await productCollection.aggregate(pipeline).toArray();
+    //   // .skip(page * size)
+    //   // .limit(size)
+
+    //   res.send(result);
+    // })
+    app.get("/products", async (req, res) => {
       const page = parseInt(req.query.page) || 0;
       const size = parseInt(req.query.size) || 10;
-      const result = await productCollection.find()
-      .skip(page * size)
-      .limit(size)
-      .toArray();
-      res.send(result);
-    })
+      const brandFilter = req.query.brand;
+      const brandFilters = brandFilter ? brandFilter.split(",") : [];
+      //console.log(brandFilter);
+      const pipeline = [];
+
+      // Only apply the $match stage if there are brands to filter by
+      if (brandFilters.length > 0) {
+        pipeline.push({
+          $match: {
+            seller: { $in: brandFilters },
+          },
+        });
+      }
+
+      // Pagination stages
+      pipeline.push({ $skip: page * size }, { $limit: size });
+
+      try {
+        const result = await productCollection.aggregate(pipeline).toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: "Failed to fetch products" });
+      }
+    });
+
     //add data in users cllection
-    app.post('/products', async (req,res) => {
+    app.post("/products", async (req, res) => {
       const product = req.body;
       const result = await productCollection.insertOne(product);
       res.send(result);
-    })
+    });
 
     // product count for pagination
-    app.get('/productsCount', async (req,res) => {
-         const count = await productCollection.estimatedDocumentCount();
-         res.send({count});
-    })
+    app.get("/productsCount", async (req, res) => {
+      const brandFilter = req.query.brand;
+      const brandFilters = brandFilter ? brandFilter.split(",") : [];
+      const matchStage = {};
+
+      if (brandFilters.length > 0) {
+        matchStage.seller = { $in: brandFilters };
+      }
+      const count = await productCollection.countDocuments(matchStage);
+      res.send({ count });
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
@@ -61,11 +113,10 @@ async function run() {
 }
 run().catch(console.dir);
 
+app.get("/", (req, res) => {
+  res.send("Job-Task-Scic Server Running");
+});
 
-app.get('/' , (req,res) => {
-   res.send('Job-Task-Scic Server Running');
-})
-
-app.listen( port, () => {
-    console.log(`Job-Task-Scic Server Running on port ${port}`);
-})
+app.listen(port, () => {
+  console.log(`Job-Task-Scic Server Running on port ${port}`);
+});
