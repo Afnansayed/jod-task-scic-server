@@ -58,7 +58,9 @@ async function run() {
       const size = parseInt(req.query.size) || 10;
       const brandFilter = req.query.brand;
       const brandFilters = brandFilter ? brandFilter.split(",") : [];
-      //console.log(brandFilter);
+      const categoryFilter = req.query.category ? req.query.category.split(",") : [];
+      console.log(categoryFilter);
+
       const pipeline = [];
 
       // Only apply the $match stage if there are brands to filter by
@@ -68,6 +70,12 @@ async function run() {
             seller: { $in: brandFilters },
           },
         });
+      }
+
+      if(categoryFilter.length > 0){
+        pipeline.push({
+          $match:{category: {$in: categoryFilter}}
+        })
       }
 
       // Pagination stages
@@ -81,26 +89,32 @@ async function run() {
       }
     });
 
+     // product count for pagination
+     app.get("/productsCount", async (req, res) => {
+      const brandFilter = req.query.brand;
+      const brandFilters = brandFilter ? brandFilter.split(",") : [];
+      const categoryFilter = req.query.category ? req.query.category.split(",") : [];
+
+      const matchStage = {};
+
+      if (brandFilters.length > 0) {
+        matchStage.seller = { $in: brandFilters };
+      }
+
+      if(categoryFilter.length > 0){
+        matchStage.category = {$in: categoryFilter}
+      }
+      const count = await productCollection.countDocuments(matchStage);
+      res.send({ count });
+    });
+      // ------- 0000 ------------
+
     //add data in users cllection
     app.post("/products", async (req, res) => {
       const product = req.body;
       const result = await productCollection.insertOne(product);
       res.send(result);
     });
-
-    // product count for pagination
-    app.get("/productsCount", async (req, res) => {
-      const brandFilter = req.query.brand;
-      const brandFilters = brandFilter ? brandFilter.split(",") : [];
-      const matchStage = {};
-
-      if (brandFilters.length > 0) {
-        matchStage.seller = { $in: brandFilters };
-      }
-      const count = await productCollection.countDocuments(matchStage);
-      res.send({ count });
-    });
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
