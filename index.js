@@ -35,7 +35,8 @@ async function run() {
       const categoryFilter = req.query.category ? req.query.category.split(",") : [];
       const maxPrice = parseFloat(req.query.priceRange) || Number.MAX_VALUE;
       const productName = req.query.search;
-      //console.log(productName);
+      const priceOrder = req.query.priceOrder === 'asc' ? 1 : -1;
+      console.log(priceOrder);
 
       const pipeline = [];
 
@@ -67,6 +68,10 @@ async function run() {
         }
       })
     }
+
+    pipeline.push({
+      $sort:{price: priceOrder}
+    })
       // Pagination stages
       pipeline.push({ $skip: page * size }, { $limit: size });
 
