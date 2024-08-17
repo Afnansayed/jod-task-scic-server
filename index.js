@@ -34,7 +34,8 @@ async function run() {
       const brandFilters = brandFilter ? brandFilter.split(",") : [];
       const categoryFilter = req.query.category ? req.query.category.split(",") : [];
       const maxPrice = parseFloat(req.query.priceRange) || Number.MAX_VALUE;
-     // console.log(maxPrice);
+      const productName = req.query.search;
+      //console.log(productName);
 
       const pipeline = [];
 
@@ -58,6 +59,14 @@ async function run() {
         price: {$lte: maxPrice},
       }
      })
+     //for searching 
+     if(productName){
+      pipeline.push({
+        $match: {
+          name: {$regex: productName, $options: 'i'}
+        }
+      })
+    }
       // Pagination stages
       pipeline.push({ $skip: page * size }, { $limit: size });
 
@@ -75,18 +84,24 @@ async function run() {
       const brandFilters = brandFilter ? brandFilter.split(",") : [];
       const categoryFilter = req.query.category ? req.query.category.split(",") : [];
       const maxPrice = parseFloat(req.query.priceRange) || Number.MAX_VALUE;
+      const productName = req.query.search;
 
       const matchStage = {};
-
+    //  for brand
       if (brandFilters.length > 0) {
         matchStage.seller = { $in: brandFilters };
       }
-
+     // for category 
       if(categoryFilter.length > 0){
         matchStage.category = {$in: categoryFilter}
       }
-
+      // for priceRange sorting 
       matchStage.price = {$lte: maxPrice};
+     // for searching
+      if(productName){
+        matchStage.name = {$regex: productName, $options: 'i'}
+      }
+
 
       const count = await productCollection.countDocuments(matchStage);
       res.send({ count });
