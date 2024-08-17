@@ -5,7 +5,10 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173","https://market-place-ed0bd.web.app", "https://market-place-ed0bd.firebaseapp.com"],
+  credentials: true,
+}));
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.khblnbj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -22,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    //await client.connect();
 
     const productCollection = client.db("FshionX").collection("products");
 
@@ -36,7 +39,7 @@ async function run() {
       const maxPrice = parseFloat(req.query.priceRange) || Number.MAX_VALUE;
       const productName = req.query.search;
       const priceOrder = req.query.priceOrder === 'asc' ? 1 : -1;
-      console.log(priceOrder);
+      //console.log(priceOrder);
 
       const pipeline = [];
 
@@ -120,7 +123,7 @@ async function run() {
       res.send(result);
     });
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    //await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
