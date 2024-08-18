@@ -25,7 +25,7 @@ This repository contains the backend code for the Fullstack functionality-based 
 1. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/yourusername/product-search-filter-backend.git
+    git clone [https://github.com/yourusername/product-search-filter-backend.git](https://github.com/Afnansayed/jod-task-scic-server.git)
     cd jod-task-scic-server
     ```
 
